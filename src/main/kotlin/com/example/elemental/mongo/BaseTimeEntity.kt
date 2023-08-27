@@ -6,7 +6,8 @@ import java.time.LocalDateTime
 
 abstract class BaseTimeEntity {
     @CreatedDate
-    var createdAt: LocalDateTime? = null
+    var createdAt: LocalDateTime? = LocalDateTime.now()
+
     @LastModifiedDate
     var updatedAt: LocalDateTime? = null
 }

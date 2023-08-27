@@ -1,5 +1,5 @@
 package com.example.elemental.mongo.repository
-import com.example.elemental.mongo.model.Character
+import com.example.elemental.mongo.document.Character
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.repository.MongoRepository
 

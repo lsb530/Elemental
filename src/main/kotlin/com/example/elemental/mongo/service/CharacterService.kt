@@ -1,7 +1,7 @@
 package com.example.elemental.mongo.service
 import com.example.elemental.mongo.dto.CharacterDTO
 import com.example.elemental.mongo.dto.CreateCharacterDTO
-import com.example.elemental.mongo.model.Character
+import com.example.elemental.mongo.document.Character
 import com.example.elemental.mongo.repository.CharacterRepository
 import org.bson.types.ObjectId
 import org.springframework.stereotype.Service
