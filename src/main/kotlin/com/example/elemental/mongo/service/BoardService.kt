@@ -14,17 +14,17 @@ class BoardService(
 ) {
     private val boardMapper = BoardMapper.INSTANCE
     fun getBoards(): List<BoardResponse> {
-        return boardRepository.findAll().map { boardMapper.convertToDto(it) }
+        return boardRepository.findAll().map { boardMapper.convertDocumentToResponse(it) }
     }
 
     fun getBoard(id: ObjectId): BoardResponse {
         return boardRepository.findByIdOrNull(id)?.let {
-            boardMapper.convertToDto(it)
+            boardMapper.convertDocumentToResponse(it)
         } ?: throw RuntimeException("Board not found")
     }
 
-    fun saveBoard(boardReq: CreateBoard): BoardResponse {
-        val board = boardMapper.convertToModel(boardReq)
-        return boardMapper.convertToDto(boardRepository.save(board))
+    fun saveBoard(createBoard: CreateBoard): BoardResponse {
+        val board = boardMapper.createReqToDocument(createBoard)
+        return boardMapper.convertDocumentToResponse(boardRepository.save(board))
     }
 }

@@ -16,10 +16,10 @@ interface BoardMapper {
     }
 
     @Mapping(target = "id", expression = "java(board.getId().toString())")
-    fun convertToDto(board: Board): BoardResponse
+    fun convertDocumentToResponse(board: Board): BoardResponse
 
     @InheritInverseConfiguration
     @Mapping(target = "id", expression = "java(new ObjectId())")
-    fun convertToModel(boardDto: CreateBoard): Board
+    fun createReqToDocument(createBoard: CreateBoard): Board
 
 }
