@@ -13,11 +13,21 @@ class BoardService(
     private val boardRepository: BoardRepository,
 ) {
     private val boardMapper = BoardMapper.INSTANCE
-    fun getBoards(): List<BoardResponse> {
+    fun getBoards(author: String?): List<BoardResponse> {
+        author?.let {
+            val boards = boardRepository.findBoardsByAuthor(author)
+            return boards.map { boardMapper.convertDocumentToResponse(it) }
+        }
         return boardRepository.findAll().map { boardMapper.convertDocumentToResponse(it) }
     }
 
-    fun getBoard(id: ObjectId): BoardResponse {
+    fun getBoardWithMongoTemplateById(id: ObjectId): BoardResponse {
+        val board = boardRepository.findBoardByObjectId(id)
+        return board?.let { boardMapper.convertDocumentToResponse(board) }
+            ?: throw RuntimeException("Board not found")
+    }
+
+    fun getBoardWithDataRepositoryById(id: ObjectId): BoardResponse {
         return boardRepository.findByIdOrNull(id)?.let {
             boardMapper.convertDocumentToResponse(it)
         } ?: throw RuntimeException("Board not found")

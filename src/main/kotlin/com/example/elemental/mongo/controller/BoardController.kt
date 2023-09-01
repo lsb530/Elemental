@@ -21,16 +21,22 @@ class BoardController(
     }
 
     @GetMapping
-    fun getBoards(): ResponseEntity<Any> {
-        return ResponseEntity.ok().body(boardService.getBoards())
+    fun getBoards(
+        @RequestParam author: String?,
+    ): ResponseEntity<Any> {
+        return ResponseEntity.ok().body(boardService.getBoards(author))
     }
 
     @GetMapping("/{id}")
     fun getBoard(
-        @PathVariable id: String
+        @PathVariable id: String,
+        @RequestParam(defaultValue = "false") useMongoTemplate: Boolean?
     ): ResponseEntity<Any> {
         val objectId = validObjectId(id)
-        return ResponseEntity.ok().body(boardService.getBoard(objectId))
+        if (useMongoTemplate == true) {
+            return ResponseEntity.ok().body(boardService.getBoardWithMongoTemplateById(objectId))
+        }
+        return ResponseEntity.ok().body(boardService.getBoardWithDataRepositoryById(objectId))
     }
 
     @PostMapping
