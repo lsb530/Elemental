@@ -1,8 +1,8 @@
 package com.example.elemental.mongo.dto.request
 
-data class CreateBoard(
+data class CreateBoardRequest(
     val name: String,
     val title: String,
-    val content: String,
+    val content: String?,
     val author: String,
 )

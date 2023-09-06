@@ -1,6 +1,5 @@
 package com.example.elemental.mongo.document
 
-import com.example.elemental.mongo.BaseTimeEntity
 import org.bson.types.ObjectId
 import org.springframework.data.mongodb.core.mapping.Document
 import org.springframework.data.mongodb.core.mapping.MongoId

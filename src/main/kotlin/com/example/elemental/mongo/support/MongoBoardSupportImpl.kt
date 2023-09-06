@@ -6,9 +6,9 @@ import org.springframework.data.mongodb.core.MongoTemplate
 import org.springframework.data.mongodb.core.query.Criteria
 import org.springframework.data.mongodb.core.query.Query
 
-class BoardSupportImpl(
+class MongoBoardSupportImpl(
     private val mongoTemplate: MongoTemplate,
-) : BoardSupport {
+) : MongoBoardSupport {
     override fun findBoardsByAuthor(author: String): MutableList<Board> {
         val criteria = Criteria.where("author").`is`(author)
         val query = Query(criteria)

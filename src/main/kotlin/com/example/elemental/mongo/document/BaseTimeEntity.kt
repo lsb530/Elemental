@@ -1,4 +1,4 @@
-package com.example.elemental.mongo
+package com.example.elemental.mongo.document
 
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.data.annotation.LastModifiedDate
