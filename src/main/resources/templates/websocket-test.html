@@ -31,11 +31,13 @@
         <h1>SockJs with STOMP</h1>
         <input id="left_msg" type="text">
         <button onclick="sendLeftMessage()">Send Message</button>
+        <button onclick="closeLeftSession()">Disconnect</button>
     </div>
     <div id="right-div">
         <h1>WebSocket</h1>
         <input id="right_msg" type="text">
         <button onclick="sendRightMessage()">Send Message</button>
+        <button onclick="closeRightSession()">Disconnect</button>
     </div>
 
 </div>
@@ -51,20 +53,26 @@
             document.getElementById('left-div').innerHTML += elem;
         });
     })
-
     function sendLeftMessage() {
         const msg = document.getElementById('left_msg').value
         stompClient.send("/app/hello", {}, msg);
     }
 
+    function closeLeftSession() {
+        stompClient.disconnect();
+    }
+
     // right: Socket
-    var webSocket = new WebSocket('ws://localhost:8888/my-websocket-endpoint');
+    // var webSocket = new WebSocket('ws://localhost:8888/my-websocket-endpoint');
+    const webSocket = new WebSocket(`ws://${location.host}/chat`);
     webSocket.onopen = function(event) {
         console.log('WebSocket is connected.', event);
     };
 
     webSocket.onmessage = function(event) {
         console.log('Client received a message', event);
+        var elem = `<div>${event.data}</div>`;
+        document.getElementById('right-div').innerHTML += elem;
     };
 
     webSocket.onclose = function(event) {
@@ -72,7 +80,12 @@
     };
 
     function sendRightMessage() {
-        webSocket.send('Hello, Server!');
+        const msg = document.getElementById('right_msg').value;
+        webSocket.send(msg);
+    }
+
+    function closeRightSession() {
+        webSocket.close();
     }
 </script>
 

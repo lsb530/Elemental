@@ -1,7 +1,9 @@
 package com.example.elemental.postgre.model
 
-import jakarta.persistence.*
-import org.hibernate.annotations.ColumnDefault
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 import java.util.*
 
 @Table(name = "board", schema = "public")
@@ -9,7 +11,7 @@ import java.util.*
 class Board(
     @Id
     @GeneratedValue
-    @ColumnDefault("uuid_generate_v4()")
+//    @ColumnDefault("uuid_generate_v4()")
     val id: UUID = UUID.randomUUID(),
     var name: String,
     var title: String,
