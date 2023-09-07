@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>WebSocket Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<style>
+    .container {
+        display: flex;
+    }
+    .container #left-div {
+        width: 50%;
+        height: 90vh;
+        margin: 1rem;
+        background: #FFCCCC;
+        text-align: center;
+    }
+    .container #right-div {
+        width: 50%;
+        height: 90vh;
+        margin: 1rem;
+        background: #CCFFFF;
+        text-align: center;
+    }
+</style>
+<body>
+<div class="container">
+    <div id='left-div'>
+        <h1>SockJs with STOMP</h1>
+        <input id="left_msg" type="text">
+        <button onclick="sendLeftMessage()">Send Message</button>
+    </div>
+    <div id="right-div">
+        <h1>WebSocket</h1>
+        <input id="right_msg" type="text">
+        <button onclick="sendRightMessage()">Send Message</button>
+    </div>
+
+</div>
+<script>
+    // left: SockJS with STOMP
+    const sockJsSocket = new SockJS('/websocket'); // SockJs
+    const stompClient = Stomp.over(sockJsSocket);
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+        stompClient.subscribe('/topic/greetings', function (greeting) {
+            console.log("Received: " + greeting.body);
+            var elem = `<div>${greeting.body}</div>`;
+            document.getElementById('left-div').innerHTML += elem;
+        });
+    })
+
+    function sendLeftMessage() {
+        const msg = document.getElementById('left_msg').value
+        stompClient.send("/app/hello", {}, msg);
+    }
+
+    // right: Socket
+    var webSocket = new WebSocket('ws://localhost:8888/my-websocket-endpoint');
+    webSocket.onopen = function(event) {
+        console.log('WebSocket is connected.', event);
+    };
+
+    webSocket.onmessage = function(event) {
+        console.log('Client received a message', event);
+    };
+
+    webSocket.onclose = function(event) {
+        console.log('WebSocket is closed.', event);
+    };
+
+    function sendRightMessage() {
+        webSocket.send('Hello, Server!');
+    }
+</script>
+
+</body>
+</html>

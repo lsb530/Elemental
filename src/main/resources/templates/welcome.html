@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+  안녕하세요
+  <h1 th:text="${greeting}"></h1>
+</body>
+<script>
+    let socket = new WebSocket("ws://localhost:8888/user");
+    socket.onopen = function(event) {
+        console.log("Connection Opened: ", event);
+        let payload = JSON.stringify({ user: "John" });
+        socket.send(payload);
+    };
+    socket.onmessage = function(event) {
+        console.log("Received message: ", event.data);
+    };
+    socket.onclose = function(event) {
+        console.log("Connection Closed: ", event);
+    };
+    socket.onerror = function(event) {
+        console.log("Error: ", event);
+    };
+
+</script>
+</html>

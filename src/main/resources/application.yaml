@@ -1,6 +1,12 @@
 server:
   port: 8888
 spring:
+  thymeleaf:
+    cache: false
+    check-template-location: true
+    prefix: classpath:/templates/
+    suffix: .html
+    enabled: true
   main:
     allow-bean-definition-overriding: true
   data:
