@@ -5,7 +5,7 @@ import jakarta.websocket.server.ServerEndpoint
 import org.springframework.stereotype.Service
 import java.util.*
 
-@ServerEndpoint(value = "/chat")
+@ServerEndpoint(value = "/java-EE")
 @Service
 class JavaEEWebSocketService {
     /*
@@ -41,8 +41,7 @@ class JavaEEWebSocketService {
     fun onMessage(message: String, session: Session?) {
         println("Received message $message, from ${session?.id}")
         for (client in CLIENTS) {
-            println("Send message $message")
-            client.basicRemote.sendText(message)
+            client.basicRemote.sendText("Sever Reply(Java EE): $message")
         }
     }
 

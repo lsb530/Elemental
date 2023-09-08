@@ -6,10 +6,6 @@ import org.springframework.web.bind.annotation.GetMapping
 
 @Controller
 class ViewController {
-    @GetMapping("/chat")
-    fun chatGET(): String? {
-        return "chat"
-    }
 
     @GetMapping("/welcome")
     fun hello(model: Model): String {
@@ -17,8 +13,8 @@ class ViewController {
         return "welcome"
     }
 
-    @GetMapping("/websocket-test")
-    fun websocketTest(): String {
-        return "websocket-test"
+    @GetMapping("/ws-test")
+    fun wsTest(): String {
+        return "ws-test"
     }
 }

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+    <title>WebSocket Example</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<style>
+    .container {
+        display: flex;
+        /*background: beige;*/
+        height: 90vh;
+        justify-content: space-evenly;
+    }
+    .container #jwe {
+        background: #FFCCCC;
+        text-align: center;
+    }
+    .container #handler {
+        background: #CCFFFF;
+        text-align: center;
+    }
+    .container #stomp {
+        background: #FFFFCC;
+        text-align: center;
+    }
+    .container .content {
+        padding-bottom: 1.5rem;
+    }
+</style>
+<body>
+    <div class="container">
+        <div id="jwe">
+            <h1>Java EE WebSocket API</h1>
+            <div class="content">
+                <input class="messageInput" disabled placeholder="Enter your message" type="text">
+                <button class="connectButton" disabled>Connect</button>
+                <button class="sendButton" disabled>Send</button>
+                <button class="disconnectButton" disabled>Disconnect</button>
+            </div>
+        </div>
+        <div id="handler">
+            <h1>Springboot WebSocket Handler</h1>
+            <div class="content">
+                <input class="messageInput" disabled placeholder="Enter your message" type="text">
+                <button class="connectButton" disabled>Connect</button>
+                <button class="sendButton" disabled>Send</button>
+                <button class="disconnectButton" disabled>Disconnect</button>
+            </div>
+        </div>
+        <div id="stomp">
+            <h1>Springboot STOMP Message Broker</h1>
+            <div class="content">
+                <input class="messageInput" disabled placeholder="Enter your message" type="text">
+                <button class="connectButton" disabled>Connect</button>
+                <button class="sendButton" disabled>Send</button>
+                <button class="disconnectButton" disabled>Disconnect</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    class WebSocketExample {
+        constructor(elementId) {
+            this.container = document.getElementById(elementId);
+
+            this.connectButton = this.container.querySelector('.content .connectButton');
+            this.messageInput = this.container.querySelector('.content .messageInput');
+            this.sendButton = this.container.querySelector('.content .sendButton');
+            this.disconnectButton = this.container.querySelector('.content .disconnectButton');
+            this.setButtonState(false);
+
+            // Event binding
+            this.connectButton.onclick = () => this.connectWebSocket();
+            this.sendButton.onclick = () => this.sendMessage();
+            this.disconnectButton.onclick = () => this.disconnectWebSocket();
+        }
+
+        setButtonState(connected) {
+            this.connectButton.disabled = connected;
+            this.messageInput.disabled = !connected;
+            this.sendButton.disabled = !connected;
+            this.disconnectButton.disabled = !connected;
+        }
+
+        connectWebSocket() { }
+
+        sendMessage() { }
+
+        disconnectWebSocket() { }
+    }
+
+    class JavaEEWebSocket extends WebSocketExample {
+        connectWebSocket() {
+            this.webSocket = new WebSocket(`ws://${location.host}/java-EE`);
+            this.webSocket.onopen = (event) => {
+                console.log('WebSocket connected:', event);
+                this.setButtonState(true);
+            };
+            this.webSocket.onmessage = (event) => {
+                console.log('WebSocket message received:', event.data);
+                const newElem = document.createElement('div');
+                newElem.innerText = event.data;
+                this.container.appendChild(newElem);
+            };
+            this.webSocket.onclose = (event) => {
+                console.log('WebSocket closed:', event);
+                this.setButtonState(false);
+            };
+        }
+
+        sendMessage() {
+            const message = this.messageInput.value;
+            this.webSocket.send(message);
+            this.messageInput.value = '';
+        }
+
+        disconnectWebSocket() {
+            this.webSocket.close();
+        }
+    }
+
+    class SpringWebSocketHandler extends WebSocketExample {
+        connectWebSocket() {
+            this.webSocket = new WebSocket(`ws://${location.host}/ws-handler`);
+            this.webSocket.onopen = (event) => {
+                console.log('WebSocket connected:', event);
+                this.setButtonState(true);
+            };
+            this.webSocket.onmessage = (event) => {
+                console.log('WebSocket message received:', event.data);
+                const newElem = document.createElement('div');
+                newElem.innerText = event.data;
+                this.container.appendChild(newElem);
+            };
+            this.webSocket.onclose = (event) => {
+                console.log('WebSocket closed:', event);
+                this.setButtonState(false);
+            };
+        }
+
+        sendMessage() {
+            const message = this.messageInput.value;
+            this.webSocket.send(message);
+            this.messageInput.value = '';
+        }
+
+        disconnectWebSocket() {
+            this.webSocket.close();
+        }
+    }
+    // class SpringStompMessageBroker extends WebSocketExample {
+    //     // Spring Stomp Message Broker에 특화된 로직
+    // }
+
+    class SpringStompMessageBroker extends WebSocketExample {
+        connectWebSocket() {
+            // SockJS and Stomp client setup
+            this.sock = new SockJS(`http://${location.host}/ws-stomp`);
+            this.stompClient = Stomp.over(this.sock);
+
+            this.stompClient.connect({}, (frame) => {
+                console.log('STOMP connected:', frame);
+                this.setButtonState(true);
+
+                // Subscribe to a topic (Replace 'your/topic' with the actual topic you want to subscribe to)
+                this.stompClient.subscribe('/topic/greetings', (message) => {
+                    const newElem = document.createElement('div');
+                    newElem.innerText = message.body;
+                    this.container.appendChild(newElem);
+                });
+            }, (error) => {
+                console.log('STOMP connection error:', error);
+                this.setButtonState(false);
+            });
+        }
+
+        sendMessage() {
+            const message = this.messageInput.value;
+
+            // Publish a message (Replace 'your/topic' with the actual topic you want to publish to)
+            this.stompClient.send('/app/hello', {}, message);
+
+            this.messageInput.value = '';
+        }
+
+        disconnectWebSocket() {
+            if (this.stompClient) {
+                this.stompClient.disconnect(() => {
+                    console.log('STOMP disconnected');
+                    this.setButtonState(false);
+                });
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // 각 div 요소에 대한 클래스 인스턴스를 생성합니다.
+        const jwe = new JavaEEWebSocket('jwe');
+        const handler = new SpringWebSocketHandler('handler');
+        const stomp = new SpringStompMessageBroker('stomp');
+    })
+
+</script>
+</html>

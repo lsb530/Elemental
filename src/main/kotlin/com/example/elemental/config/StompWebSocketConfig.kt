@@ -6,16 +6,20 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
 
+
 @Configuration
 @EnableWebSocketMessageBroker
-class WebSocketBrokerConfig : WebSocketMessageBrokerConfigurer {
-    override fun configureMessageBroker(registry: MessageBrokerRegistry) {
-        registry.enableSimpleBroker("/queue", "/topic")
-        registry.setApplicationDestinationPrefixes("/app")
+class StompWebSocketConfig : WebSocketMessageBrokerConfigurer
+{
+    // Broker & STOMP
+    override fun configureMessageBroker(config: MessageBrokerRegistry) {
+        config.enableSimpleBroker("/topic") // 메시지 브로커 경로
+        config.setApplicationDestinationPrefixes("/app") // 서버에 보낼 메시지의 prefix
     }
 
     override fun registerStompEndpoints(registry: StompEndpointRegistry) {
-        registry.addEndpoint("/gs-guide-websocket")
-            .withSockJS()
+        registry.addEndpoint("/ws-stomp")
+            .withSockJS() // 웹소켓 엔드포인트
     }
+
 }
