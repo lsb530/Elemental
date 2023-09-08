@@ -1,14 +1,13 @@
-package com.example.elemental.chat
+package com.example.elemental.view
 
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.web.bind.annotation.GetMapping
 
 @Controller
-class ChatController {
+class ViewController {
     @GetMapping("/chat")
     fun chatGET(): String? {
-        println("chat GET()")
         return "chat"
     }
 
@@ -16,5 +15,10 @@ class ChatController {
     fun hello(model: Model): String {
         model.addAttribute("greeting", "Hello Thymeleaf!")
         return "welcome"
+    }
+
+    @GetMapping("/websocket-test")
+    fun websocketTest(): String {
+        return "websocket-test"
     }
 }
