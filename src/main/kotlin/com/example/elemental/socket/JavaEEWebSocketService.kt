@@ -1,11 +1,15 @@
 package com.example.elemental.socket
 
+import com.example.elemental.config.ServerEndpointConfig
 import jakarta.websocket.*
 import jakarta.websocket.server.ServerEndpoint
 import org.springframework.stereotype.Service
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArraySet
 
-@ServerEndpoint(value = "/java-EE")
+
+@ServerEndpoint(value = "/java-EE", configurator = ServerEndpointConfig::class)
 @Service
 class JavaEEWebSocketService {
     /*
@@ -17,31 +21,28 @@ class JavaEEWebSocketService {
     * 따라서 @ServerEndpoint를 사용할 때는 Spring의 @Autowired를 사용한 의존성 주입이 제대로 동작하지 않을 가능성이 있으므로, 별도로 초기화 작업이 필요할 수 있습니다.
     * 이러한 문제를 해결하기 위해 @ServerEndpoint 클래스 내부에서 Spring의 ApplicationContext에 직접 접근하여 필요한 빈을 가져오는 방법 등이 종종 사용됩니다.
     * */
+
     private val CLIENTS: MutableSet<Session> = Collections.synchronizedSet(HashSet())
+
     @OnOpen
     fun onOpen(session: Session) {
-        println(session)
-        if (CLIENTS.contains(session)) {
-            println("Already connected session, ${session.id}")
-        } else {
-            CLIENTS.add(session)
-            println("New session, ${session.id}")
-        }
+        println("New session, ${session.id}")
+        CLIENTS.add(session)
     }
 
     @OnClose
     @Throws(Exception::class)
     fun onClose(session: Session) {
-        CLIENTS.remove(session)
         println("Close session, ${session.id}")
+        CLIENTS.remove(session)
     }
 
     @OnMessage
     @Throws(Exception::class)
-    fun onMessage(message: String, session: Session?) {
+    fun onMessage(message: String, session: Session) {
         println("Received message $message, from ${session?.id}")
         for (client in CLIENTS) {
-            client.basicRemote.sendText("Sever Reply(Java EE): $message")
+            client.basicRemote.sendText("[Java EE]: $message")
         }
     }
 
