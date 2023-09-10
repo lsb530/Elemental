@@ -16,66 +16,122 @@
     .container #jwe {
         background: #FFCCCC;
         text-align: center;
+        overflow-y: auto;
     }
     .container #handler {
         background: #CCFFFF;
         text-align: center;
+        overflow-y: auto;
     }
     .container #stomp {
         background: #FFFFCC;
         text-align: center;
+        overflow-y: auto;
     }
-    .container .content {
+    .container .action {
         padding-bottom: 1.5rem;
+    }
+    .info {
+        display: flex;
+        justify-content: space-evenly;
+        padding-bottom: 1.5rem;
+    }
+    .content {
+        text-align: left;
+        padding-left: 1.2rem;
+    }
+    .system {
+        color: red;
+    }
+    .self {
+        color: black;
+    }
+    .other {
+        color: green;
     }
 </style>
 <body>
     <div class="container">
         <div id="jwe">
             <h1>Java EE WebSocket API</h1>
-            <div class="content">
+            <div class="connectionCount">Connected Users: 0</div>
+            <div class="action">
                 <input class="messageInput" disabled placeholder="Enter your message" type="text">
                 <button class="connectButton" disabled>Connect</button>
                 <button class="sendButton" disabled>Send</button>
                 <button class="disconnectButton" disabled>Disconnect</button>
+            </div>
+            <div class="content">
+
             </div>
         </div>
         <div id="handler">
             <h1>Springboot WebSocket Handler</h1>
-            <div class="content">
+            <div class="info">
+                <div class="nickname">nickname: </div>
+                <div class="connectionCount">Connected Users: 0</div>
+            </div>
+            <div class="action">
                 <input class="messageInput" disabled placeholder="Enter your message" type="text">
                 <button class="connectButton" disabled>Connect</button>
                 <button class="sendButton" disabled>Send</button>
                 <button class="disconnectButton" disabled>Disconnect</button>
             </div>
+            <div class="content">
+
+            </div>
         </div>
         <div id="stomp">
             <h1>Springboot STOMP Message Broker</h1>
-            <div class="content">
+            <div class="action">
                 <input class="messageInput" disabled placeholder="Enter your message" type="text">
                 <button class="connectButton" disabled>Connect</button>
                 <button class="sendButton" disabled>Send</button>
                 <button class="disconnectButton" disabled>Disconnect</button>
+            </div>
+            <div class="content">
+
             </div>
         </div>
     </div>
 </body>
 
 <script>
+    /**
+     * Represents a WebSocket message
+     * @typedef {Object} MessageData
+     * @property {string} nickname - The nickname of the user who sent the message
+     * @property {string} message - The message content
+     * @property {string} type - The type of the message (e.g. 'system', 'user')
+     * @property {number} clients - The number of connected clients
+     */
     class WebSocketExample {
+
         constructor(elementId) {
+            // state
+            this.nickname = null
+
             this.container = document.getElementById(elementId);
 
-            this.connectButton = this.container.querySelector('.content .connectButton');
-            this.messageInput = this.container.querySelector('.content .messageInput');
-            this.sendButton = this.container.querySelector('.content .sendButton');
-            this.disconnectButton = this.container.querySelector('.content .disconnectButton');
+            this.connectButton = this.container.querySelector('.action .connectButton');
+            this.messageInput = this.container.querySelector('.action .messageInput');
+            this.sendButton = this.container.querySelector('.action .sendButton');
+            this.disconnectButton = this.container.querySelector('.action .disconnectButton');
             this.setButtonState(false);
 
             // Event binding
             this.connectButton.onclick = () => this.connectWebSocket();
             this.sendButton.onclick = () => this.sendMessage();
             this.disconnectButton.onclick = () => this.disconnectWebSocket();
+
+            // Add keydown event to input for handling Enter key
+            this.messageInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    if (this.messageInput.value.trim() === '') return
+                    event.preventDefault();  // Prevents default action like form submission
+                    this.sendMessage();
+                }
+            });
         }
 
         setButtonState(connected) {
@@ -131,19 +187,55 @@
             };
             this.webSocket.onmessage = (event) => {
                 console.log('WebSocket message received:', event.data);
+
+                /** @type {MessageData} */
+                const messageData = JSON.parse(event.data);
+                console.info('messageData', messageData)
+                console.info('messageData.clients', messageData.clients)
+
+                if (messageData.message.includes("Your nickname is")) {
+                    this.nickname = messageData.nickname;
+                    const nicknameElem = this.container.querySelector('.info .nickname');
+                    nicknameElem.innerText = `nickname: ${messageData.nickname}`;
+                    return;
+                }
+
                 const newElem = document.createElement('div');
-                newElem.innerText = event.data;
-                this.container.appendChild(newElem);
+                if (messageData.message.includes("System")) {
+                    newElem.className = "system";
+                }
+                else {
+                    if (messageData.nickname === this.nickname) {
+                        newElem.className = "self";
+                    } else {
+                        newElem.className = "other";
+                    }
+                }
+                newElem.innerText = messageData.message;
+
+                const contentElem = this.container.querySelector('.content')
+
+                // this.container.appendChild(newElem);
+                contentElem.appendChild(newElem);
+
+                // 스크롤을 아래로 이동
+                this.container.scrollTop = this.container.scrollHeight;
+
+                // 접속 인원 업데이트 (예시로 1 증가, 실제로는 서버로부터 데이터를 가져와야 함)
+                const connectionCountElem = this.container.querySelector('.info .connectionCount');
+                connectionCountElem.innerText = `Connected Users: ${messageData.clients}`;
             };
             this.webSocket.onclose = (event) => {
-                console.log('WebSocket closed:', event);
+                const nicknameElem = this.container.querySelector('.info .nickname');
+                nicknameElem.innerText = `nickname: `;
                 this.setButtonState(false);
             };
         }
 
         sendMessage() {
             const message = this.messageInput.value;
-            this.webSocket.send(message);
+            console.info('message', message)
+            this.webSocket.send(message)
             this.messageInput.value = '';
         }
 
@@ -151,9 +243,6 @@
             this.webSocket.close();
         }
     }
-    // class SpringStompMessageBroker extends WebSocketExample {
-    //     // Spring Stomp Message Broker에 특화된 로직
-    // }
 
     class SpringStompMessageBroker extends WebSocketExample {
         connectWebSocket() {
