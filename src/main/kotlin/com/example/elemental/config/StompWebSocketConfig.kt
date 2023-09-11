@@ -6,6 +6,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBr
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer
 
+/*
+    STOMP(Simple/Stream Text Oriented Message Protocol)
+ */
 @Configuration
 @EnableWebSocketMessageBroker
 class StompWebSocketConfig : WebSocketMessageBrokerConfigurer
