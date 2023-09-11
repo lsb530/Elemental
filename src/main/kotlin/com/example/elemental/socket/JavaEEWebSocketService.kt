@@ -1,48 +1,97 @@
 package com.example.elemental.socket
 
 import com.example.elemental.config.ServerEndpointConfig
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import jakarta.websocket.*
 import jakarta.websocket.server.ServerEndpoint
 import org.springframework.stereotype.Service
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CopyOnWriteArraySet
+import java.util.concurrent.ConcurrentSkipListSet
+import kotlin.random.Random
 
 
 @ServerEndpoint(value = "/java-EE", configurator = ServerEndpointConfig::class)
 @Service
 class JavaEEWebSocketService {
-    /*
-    * Spring Boot 환경에서 Java EE의 @ServerEndpoint 어노테이션을 사용하면,
-    * 해당 클래스의 인스턴스는 WebSocket 연결이 생성될 때마다 새로 생성됩니다.
-    * 이는 Spring의 일반적인 싱글턴 빈(Like @Component, @Service, @Repository 등)과는 다르게 동작하므로, @Autowired를 이용한 의존성 주입이 동작하지 않습니다.
-    * ServerEndpointExporter 빈을 등록하는 것은 Spring Boot 애플리케이션에서 @ServerEndpoint 어노테이션을 사용할 경우 필요한 설정입니다.
-    * 이 클래스는 WebSocket 서버 엔드포인트를 자동으로 등록하고 관리해줍니다.
-    * 따라서 @ServerEndpoint를 사용할 때는 Spring의 @Autowired를 사용한 의존성 주입이 제대로 동작하지 않을 가능성이 있으므로, 별도로 초기화 작업이 필요할 수 있습니다.
-    * 이러한 문제를 해결하기 위해 @ServerEndpoint 클래스 내부에서 Spring의 ApplicationContext에 직접 접근하여 필요한 빈을 가져오는 방법 등이 종종 사용됩니다.
-    * */
+    private val CLIENTS = ConcurrentHashMap<String, Session>()
+    private val NICKNAMES = ConcurrentHashMap<String, String>()
+    private val USED_NICKNAMES = ConcurrentSkipListSet<String>()
 
-    private val CLIENTS: MutableSet<Session> = Collections.synchronizedSet(HashSet())
+    fun generateRandomKoreanNickname(): String {
+        val firstWords = listOf("익명의", "배고픈", "즐거운", "행복한", "슬픈", "기쁜", "똑똑한", "예쁜", "멋진", "용감한")
+        val secondWords = listOf("너구리", "감자", "사과", "고양이", "토끼", "사람", "달팽이", "치타", "나무", "강아지")
 
-    @OnOpen
-    fun onOpen(session: Session) {
-        println("New session, ${session.id}")
-        CLIENTS.add(session)
-    }
+        var nickname: String
 
-    @OnClose
-    @Throws(Exception::class)
-    fun onClose(session: Session) {
-        println("Close session, ${session.id}")
-        CLIENTS.remove(session)
+        do {
+            val firstWord = firstWords[Random.nextInt(firstWords.size)]
+            val secondWord = secondWords[Random.nextInt(secondWords.size)]
+
+            nickname = "$firstWord $secondWord"
+        } while (USED_NICKNAMES.contains(nickname))
+
+        USED_NICKNAMES.add(nickname)
+
+        return nickname
     }
 
     @OnMessage
     @Throws(Exception::class)
     fun onMessage(message: String, session: Session) {
-        println("Received message $message, from ${session?.id}")
+        println("[Java EE] Received message: ${message}")
+        val nickname = NICKNAMES[session.id] ?: "익명"
+
+        val messageData = "[Java EE - $nickname]: $message"
+        val clients = CLIENTS.size  // 현재 클라이언트의 수
+        val messagePayload = mapOf("nickname" to nickname, "message" to messageData, "type" to "user", "clients" to clients)
+        val messageJSON = jacksonObjectMapper().writeValueAsString(messagePayload)
+
         for (client in CLIENTS) {
-            client.basicRemote.sendText("[Java EE]: $message")
+            client.value.basicRemote.sendText(messageJSON)
+        }
+    }
+
+    @OnOpen
+    fun onOpen(session: Session) {
+        println("New session, ${session.id}")
+
+        val nickname = generateRandomKoreanNickname()
+        NICKNAMES[session.id] = nickname
+        CLIENTS[session.id] = session
+
+        val clients = CLIENTS.size  // 현재 클라이언트의 수
+
+        val nickMessage = "Your nickname is $nickname"
+        val nickMessagePayload = mapOf("nickname" to nickname, "message" to nickMessage, "type" to "user", "clients" to clients)
+        val nickMessageJson = jacksonObjectMapper().writeValueAsString(nickMessagePayload)
+        session.basicRemote.sendText(nickMessageJson)
+
+        val broadCastMessage = "[Java EE - System]: $nickname has joined the chat."
+        val broadCastPayload = mapOf("nickname" to nickname, "message" to broadCastMessage, "type" to "user", "clients" to clients)
+        val messageJSON = jacksonObjectMapper().writeValueAsString(broadCastPayload)
+
+        for (client in CLIENTS) {
+            client.value.basicRemote.sendText(messageJSON)
+        }
+    }
+
+    @OnClose
+    @Throws(Exception::class)
+    fun onClose(session: Session) {
+        println("[Java EE] Close session, ${session.id}")
+
+        val nickname = NICKNAMES.remove(session.id) ?: "익명" // 세션 정보를 먼저 제거
+        USED_NICKNAMES.remove(nickname)  // 닉네임 재사용 가능하도록 제거
+        CLIENTS.remove(session.id)
+
+        val message = "[WS Handler - System]: $nickname has left the chat."
+        val clients = CLIENTS.size  // 현재 클라이언트의 수
+        val messagePayload = mapOf("nickname" to nickname, "message" to message, "type" to "user",  "clients" to clients)
+        val messageJSON = jacksonObjectMapper().writeValueAsString(messagePayload)
+
+        for (client in CLIENTS) {
+            client.value.basicRemote.sendText(messageJSON)
         }
     }
 

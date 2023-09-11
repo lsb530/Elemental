@@ -54,7 +54,10 @@
     <div class="container">
         <div id="jwe">
             <h1>Java EE WebSocket API</h1>
-            <div class="connectionCount">Connected Users: 0</div>
+            <div class="info">
+                <div class="nickname">nickname: </div>
+                <div class="connectionCount">Connected Users: 0</div>
+            </div>
             <div class="action">
                 <input class="messageInput" disabled placeholder="Enter your message" type="text">
                 <button class="connectButton" disabled>Connect</button>
@@ -83,6 +86,10 @@
         </div>
         <div id="stomp">
             <h1>Springboot STOMP Message Broker</h1>
+            <div class="info">
+                <div class="nickname">nickname: </div>
+                <div class="connectionCount">Connected Users: 0</div>
+            </div>
             <div class="action">
                 <input class="messageInput" disabled placeholder="Enter your message" type="text">
                 <button class="connectButton" disabled>Connect</button>
@@ -106,7 +113,6 @@
      * @property {number} clients - The number of connected clients
      */
     class WebSocketExample {
-
         constructor(elementId) {
             // state
             this.nickname = null
@@ -152,46 +158,22 @@
         connectWebSocket() {
             this.webSocket = new WebSocket(`ws://${location.host}/java-EE`);
             this.webSocket.onopen = (event) => {
-                console.log('WebSocket connected:', event);
+                console.log('Java EE WebSocket connected:', event);
                 this.setButtonState(true);
-            };
-            this.webSocket.onmessage = (event) => {
-                console.log('WebSocket message received:', event.data);
-                const newElem = document.createElement('div');
-                newElem.innerText = event.data;
-                this.container.appendChild(newElem);
             };
             this.webSocket.onclose = (event) => {
-                console.log('WebSocket closed:', event);
+                console.log('Java EE WebSocket disconnected');
+                console.log(event)
+
+                const nicknameElem = this.container.querySelector('.info .nickname');
+                nicknameElem.innerText = `nickname: `;
                 this.setButtonState(false);
             };
-        }
-
-        sendMessage() {
-            const message = this.messageInput.value;
-            this.webSocket.send(message);
-            this.messageInput.value = '';
-        }
-
-        disconnectWebSocket() {
-            this.webSocket.close();
-        }
-    }
-
-    class SpringWebSocketHandler extends WebSocketExample {
-        connectWebSocket() {
-            this.webSocket = new WebSocket(`ws://${location.host}/ws-handler`);
-            this.webSocket.onopen = (event) => {
-                console.log('WebSocket connected:', event);
-                this.setButtonState(true);
-            };
             this.webSocket.onmessage = (event) => {
-                console.log('WebSocket message received:', event.data);
+                console.log('Java EE WebSocket message received:', event.data);
 
                 /** @type {MessageData} */
                 const messageData = JSON.parse(event.data);
-                console.info('messageData', messageData)
-                console.info('messageData.clients', messageData.clients)
 
                 if (messageData.message.includes("Your nickname is")) {
                     this.nickname = messageData.nickname;
@@ -225,16 +207,76 @@
                 const connectionCountElem = this.container.querySelector('.info .connectionCount');
                 connectionCountElem.innerText = `Connected Users: ${messageData.clients}`;
             };
+        }
+
+        sendMessage() {
+            const message = this.messageInput.value;
+            this.webSocket.send(message)
+            this.messageInput.value = '';
+        }
+
+        disconnectWebSocket() {
+            this.webSocket.close();
+        }
+    }
+
+    class SpringWebSocketHandler extends WebSocketExample {
+        connectWebSocket() {
+            this.webSocket = new WebSocket(`ws://${location.host}/ws-handler`);
+            this.webSocket.onopen = (event) => {
+                console.log('Springboot WebSocket Handler connected:', event);
+
+                this.setButtonState(true);
+            };
             this.webSocket.onclose = (event) => {
+                console.log('Springboot WebSocket Handler connected');
+
                 const nicknameElem = this.container.querySelector('.info .nickname');
                 nicknameElem.innerText = `nickname: `;
                 this.setButtonState(false);
+            };
+            this.webSocket.onmessage = (event) => {
+                console.log('Springboot WebSocket Handler message received:', event.data);
+
+                /** @type {MessageData} */
+                const messageData = JSON.parse(event.data);
+
+                if (messageData.message.includes("Your nickname is")) {
+                    this.nickname = messageData.nickname;
+                    const nicknameElem = this.container.querySelector('.info .nickname');
+                    nicknameElem.innerText = `nickname: ${messageData.nickname}`;
+                    return;
+                }
+
+                const newElem = document.createElement('div');
+                if (messageData.message.includes("System")) {
+                    newElem.className = "system";
+                }
+                else {
+                    if (messageData.nickname === this.nickname) {
+                        newElem.className = "self";
+                    } else {
+                        newElem.className = "other";
+                    }
+                }
+                newElem.innerText = messageData.message;
+
+                const contentElem = this.container.querySelector('.content')
+
+                // this.container.appendChild(newElem);
+                contentElem.appendChild(newElem);
+
+                // 스크롤을 아래로 이동
+                this.container.scrollTop = this.container.scrollHeight;
+
+                // 접속 인원 업데이트 (예시로 1 증가, 실제로는 서버로부터 데이터를 가져와야 함)
+                const connectionCountElem = this.container.querySelector('.info .connectionCount');
+                connectionCountElem.innerText = `Connected Users: ${messageData.clients}`;
             };
         }
 
         sendMessage() {
             const message = this.messageInput.value;
-            console.info('message', message)
             this.webSocket.send(message)
             this.messageInput.value = '';
         }
